@@ -1,0 +1,32 @@
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+```
+
+
+```{r}
+bigfoot <- read.csv("bigfoot copy/bfro_reports_geocoded.csv")
+```
+
+```{r}
+bigfoot %>%
+  count(state) %>%
+  arrange(-n)
+```
+
+```{r}
+bigfoot %>%
+  filter(state=="California") %>%
+  count(county) %>%
+  arrange(-n)
+```
+
+```{r}
+cali <- bigfoot %>%
+  filter(state=="California")
+```
+
+```{r}
+read_csv()
+```
+
