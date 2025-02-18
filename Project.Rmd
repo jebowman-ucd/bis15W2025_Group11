@@ -31,6 +31,10 @@ alchohol <- read_csv("alcohol_consumption.csv")
 ```
 
 ```{r}
-read_csv("Species.csv")
+species <- read_csv("Species.csv")
+```
+
+```{r}
+haunts <- read_csv("haunted_places_mb.csv")
 ```
 
