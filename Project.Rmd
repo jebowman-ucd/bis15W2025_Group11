@@ -5,7 +5,7 @@ library("janitor")
 
 
 ```{r}
-bigfoot <- read.csv("bigfoot copy/bfro_reports_geocoded.csv")
+bigfoot <- read.csv("bfro_reports_geocoded.csv")
 ```
 
 ```{r}
@@ -27,6 +27,10 @@ cali <- bigfoot %>%
 ```
 
 ```{r}
-read_csv()
+alchohol <- read_csv("alcohol_consumption.csv")
+```
+
+```{r}
+read_csv("Species.csv")
 ```
 
