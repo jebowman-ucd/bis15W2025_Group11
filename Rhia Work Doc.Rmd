@@ -1,0 +1,59 @@
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+```
+
+
+```{r}
+bigfoot <- read.csv("bfro_reports_geocoded.csv")
+```
+
+```{r}
+bigfoot %>%
+  count(state) %>%
+  arrange(-n)
+```
+
+```{r}
+bigfoot %>%
+  filter(state=="California") %>%
+  count(county) %>%
+  arrange(-n)
+```
+
+```{r}
+cali <- bigfoot %>%
+  filter(state=="California")
+```
+
+```{r}
+alchohol <- read_csv("alcohol_consumption.csv")
+```
+
+```{r}
+species <- read_csv("Species.csv")
+```
+
+```{r}
+haunts <- read_csv("haunted_places_mb.csv")
+```
+
+```{r}
+bigfoot %>%
+  ggplot(aes(x=state))+
+  geom_bar()+
+  coord_flip()+
+  labs(title = "Bigfoot Sightings by State", x="State", y="Count")+
+ggsave(file="bigfootstates.png", width = 12, height = 10, dpi=300)
+```
+
+```{r}
+bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
+  clean_names()
+```
+
+```{r}
+bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
+  clean_names()
+```
+
