@@ -38,3 +38,12 @@ species <- read_csv("Species.csv")
 haunts <- read_csv("haunted_places_mb.csv")
 ```
 
+```{r}
+bigfoot %>%
+  ggplot(aes(x=state))+
+  geom_bar()+
+  coord_flip()+
+  labs(title = "Bigfoot Sightings by State", x="State", y="Count")+
+ggsave(file="bigfootstates.png", width = 12, height = 10, dpi=300)
+```
+
