@@ -47,3 +47,13 @@ bigfoot %>%
 ggsave(file="bigfootstates.png", width = 12, height = 10, dpi=300)
 ```
 
+```{r}
+bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
+  clean_names()
+```
+
+```{r}
+bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
+  clean_names()
+```
+
