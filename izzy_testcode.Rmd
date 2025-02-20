@@ -1,0 +1,61 @@
+---
+title: "Group_Project"
+author: "SasGroup"
+date: "2025-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+```
+
+
+```{r}
+bigfoot <- read.csv("bfro_reports_geocoded.csv") %>% clean_names()
+```
+
+
+```{r}
+alchohol <- read_csv("alcohol_consumption.csv") %>% clean_names()
+```
+
+```{r}
+glimpse(bigfoot)
+```
+
+```{r}
+glimpse(alchohol)
+```
+
+
+```{r}
+alcohol_cali <- alchohol %>% 
+  filter(state == "California")
+
+bigfoot_cali <- bigfoot %>%
+  filter(state=="California")
+```
+
+
+```{r}
+alcohol_cali <- 
+```
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
