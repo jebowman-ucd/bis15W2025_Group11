@@ -76,3 +76,10 @@ ggsave(file="rain.png", width = 12, height = 10, dpi=300)
 
 ```
 
+```{r}
+cali %>%
+  filter(latitude!="NA") %>%
+  group_by(precip_type) %>%
+  count(precip_type)
+```
+
