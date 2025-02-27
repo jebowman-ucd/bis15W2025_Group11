@@ -27,7 +27,7 @@ cali <- bigfoot %>%
 ```
 
 ```{r}
-alchohol <- read_csv("alcohol_consumption.csv")
+alchohol <- read_csv("alcohol_consumption.csv") %>% clean_names()
 ```
 
 ```{r}
@@ -81,5 +81,21 @@ cali %>%
   filter(latitude!="NA") %>%
   group_by(precip_type) %>%
   count(precip_type)
+```
+
+```{r}
+cali2 <- cali %>%
+  separate(county, into= c("county", "word"), sep = -7)
+cali2
+```
+
+```{r}
+alchohol %>%
+  filter(state=="California", county!="NA") %>%
+  select(county, percent_excessive_drinking)
+```
+
+```{r}
+helpme <- full_join(cali2, alchohol, by="county")#does not work, needs troubleshooting
 ```
 
