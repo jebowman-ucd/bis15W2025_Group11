@@ -99,3 +99,13 @@ alchohol %>%
 helpme <- full_join(cali2, alchohol, by="county")#does not work, needs troubleshooting
 ```
 
+
+
+
+
+
+
+
+
+
+
