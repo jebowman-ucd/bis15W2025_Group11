@@ -49,7 +49,7 @@ ggsave(file="bigfootstates.png", width = 12, height = 10, dpi=300)
 
 ```{r}
 bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
-  clean_names()
+  clean_names() 
 ```
 
 ```{r}
@@ -90,13 +90,18 @@ cali2
 ```
 
 ```{r}
-alchohol %>%
+A2 <- alchohol %>%
   filter(state=="California", county!="NA") %>%
   select(county, percent_excessive_drinking)
+
 ```
 
 ```{r}
-helpme <- full_join(cali2, alchohol, by="county")#does not work, needs troubleshooting
+
+helpme <- full_join(cali2, A2, by="county")#Works now-JB
+
+glimpse(cali2)
+glimpse(A2)
 ```
 
 

@@ -1,0 +1,110 @@
+---
+title: "Jenn workspace"
+output: html_document
+---
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+library("stringr")
+```
+
+```{r}
+bigfoot <- read.csv("bfro_reports_geocoded.csv")
+```
+
+```{r}
+
+```
+
+```{r}
+bigfoot_CA <- bigfoot %>%
+  filter(state=="California") 
+```
+
+```{r}
+bigfoot_CA %>% 
+  select(latitude, longitude,) %>%  #f command is the buffer. 
+  filter(longitude !="NA" & latitude !="NA") %>%
+  summary()
+
+```
+
+```{r}
+lat <- c(32.72, 41.99)
+long <- c(-124.2, -116.5)
+bbox <- make_bbox(long, lat, f = 0.03)
+```
+
+```{r}
+bigfootmap <- get_stadiamap(bbox, maptype = "stamen_terrain", zoom=7) #zoom impacts how large the map is in memory
+```
+
+```{r}
+ggmap(bigfootmap)
+```
+
+```{r}
+ggmap(bigfootmap) + 
+  geom_point(data = bigfoot_CA, aes(longitude, latitude), size=0.4) +
+  labs(x= "Longitude", y= "Latitude", title="Bigfoot sightings")+
+  ggsave("bigfootpoints_map.png")
+
+```
+
+```{r}
+glimpse(bigfoot_CA)
+bigfoot_CA %>% 
+  count(summary) %>%
+  arrange(-n)
+
+bigfoot_CA %>% 
+  filter(summary != "")%>%
+count(summary) %>%
+  arrange(-n)%>%
+  pivot_wider(names_from = "summary", values_from = "n") %>%
+ summarise(across(contains("cloudy"), ~ sum(.x, na.rm = TRUE)))
+
+
+bigfoot_CA %>%
+  ggplot(aes(x=gdpPercap, y=lifeExp))+
+  geom_point()+
+  geom_smooth(method=lm, se=F)+ #adds line of best fit
+  labs(title="Per Capita GDP vs. Life expectancy",
+       x="per capita GDP",
+       y="life expectancy")
+
+
+```
+
+```{r}
+alchohol <- read_csv("alcohol_consumption.csv") %>% clean_names()
+
+cal2 <- cali %>%
+  separate(county, into= c("county", "word"), sep = -7)
+cal2
+
+county_alc <- full_join(cal2, A2, by="county")
+
+glimpse(county_alc)
+
+
+
+
+A2 <- alchohol %>%
+  filter(state=="California", county!="NA") %>%
+  select(county, percent_excessive_drinking)
+
+bigfoot_CA %>% 
+  ggplot(aes(x=summary, fill=summary))+
+    geom_bar()+ #adds line of best fit
+    theme(axis.text.x = element_text(angle = 60, hjust = 1)) + #angle is the angle of the text
+  labs(title="Activity associated with shark Incidents",
+       x="activity",
+       y="Number of Incidents")
+
+```
+
+```{r}
+
+
+```
