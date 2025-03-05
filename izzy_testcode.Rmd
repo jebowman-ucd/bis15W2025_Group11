@@ -41,7 +41,8 @@ glimpse(alchohol)
 
 ```{r}
 alcohol_cali <- alchohol %>% 
-  filter(state == "California")
+  filter(state == "California") %>% 
+  select(-state)
 
 bigfoot_cali <- bigfoot %>%
   filter(state=="California")
@@ -49,11 +50,46 @@ bigfoot_cali <- bigfoot %>%
 
 
 ```{r}
-alcohol_cali <- 
+bigfoot_cali <- bigfoot_cali %>% 
+  mutate(county=str_remove(county, " County"))
+
+
+bigfoot_cali
+```
+
+```{r}
+sightings_county <- bigfoot_cali %>% 
+  count(county, name = "sightings") %>% 
+  arrange(-sightings)
+sightings_county
 ```
 
 
+```{r}
+bf_al <- full_join(sightings_county, alcohol_cali, by="county")
 
+```
+
+```{r}
+bf_al %>% 
+  filter(sightings != "NA")
+  
+```
+```{r}
+bf_al %>% 
+  ggplot(aes(x=percent_excessive_drinking, y=sightings))+
+  geom_point()+
+  geom_smooth(method=lm, se=F)
+  
+```
+ 
+
+```{r}
+bf_al %>% 
+  ggplot(aes(x=county, y=sightings))+
+  geom_bar(stat = "identity")+
+  coord_flip()
+```
 
 
 
