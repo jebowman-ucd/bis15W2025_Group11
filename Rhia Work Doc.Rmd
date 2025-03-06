@@ -5,60 +5,11 @@ library("janitor")
 
 
 ```{r}
-bigfoot <- read.csv("bfro_reports_geocoded.csv")
+bigfoot<- read.csv("data/bigfoot_updated_CAonly_noNA.csv", na = c("NA", " ", ".", "-999"))
 ```
 
 ```{r}
 bigfoot %>%
-  count(state) %>%
-  arrange(-n)
-```
-
-```{r}
-bigfoot %>%
-  filter(state=="California") %>%
-  count(county) %>%
-  arrange(-n)
-```
-
-```{r}
-cali <- bigfoot %>%
-  filter(state=="California")
-```
-
-```{r}
-alchohol <- read_csv("alcohol_consumption.csv") %>% clean_names()
-```
-
-```{r}
-species <- read_csv("Species.csv")
-```
-
-```{r}
-haunts <- read_csv("haunted_places_mb.csv")
-```
-
-```{r}
-bigfoot %>%
-  ggplot(aes(x=state))+
-  geom_bar()+
-  coord_flip()+
-  labs(title = "Bigfoot Sightings by State", x="State", y="Count")+
-ggsave(file="bigfootstates.png", width = 12, height = 10, dpi=300)
-```
-
-```{r}
-bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
-  clean_names() 
-```
-
-```{r}
-bigfoot_narm <- read.csv("bfro_reports_geocoded.csv", na=c("NA", "-999", "", ".")) %>%
-  clean_names()
-```
-
-```{r}
-cali %>%
   ggplot(aes(x=county))+
   geom_bar()+
   coord_flip()+
@@ -77,34 +28,38 @@ ggsave(file="rain.png", width = 12, height = 10, dpi=300)
 ```
 
 ```{r}
-cali %>%
-  filter(latitude!="NA") %>%
-  group_by(precip_type) %>%
-  count(precip_type)
+bigfoot %>%
+  filter(season!="Unknown") %>%
+  ggplot(aes(x=season))+
+  geom_bar()+
+  labs(title = "California Bigfoot Sightings by Season", x="Season", y="Count")+
+  ggsave(file="seasons.png", width = 12, height = 10, dpi=300)
+  
 ```
 
 ```{r}
-cali2 <- cali %>%
-  separate(county, into= c("county", "word"), sep = -7)
+bigfoot %>%
+  separate(date, into= c("county", "word"), sep = -7)
 cali2
 ```
 
 ```{r}
-A2 <- alchohol %>%
-  filter(state=="California", county!="NA") %>%
-  select(county, percent_excessive_drinking)
-
+bigfoot %>%
+  ggplot(aes(temperature_mid))+
+  geom_histogram(fill="tan", na.rm=T, bins = 25, color="white")+
+  labs(title = "Average Temperature Range During Recorded Sightings", x="Temperature (C)", y="Count")+
+  ggsave(file="temp.png", width = 15, height = 8, dpi=300)
 ```
 
 ```{r}
-
-helpme <- full_join(cali2, A2, by="county")#Works now-JB
-
-glimpse(cali2)
-glimpse(A2)
+bigfoot %>%
+  filter(conditions!=" ") %>%
+  ggplot(aes(x=conditions, fill = conditions))+
+  geom_bar()+
+  labs(title = "Sightings by Weather", x="Weather", y="Count")+
+  coord_flip()+
+  ggsave(file="conditions.png", width = 15, height = 8, dpi=300)
 ```
-
-
 
 
 

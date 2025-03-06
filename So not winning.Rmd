@@ -2,4 +2,45 @@
 title: "So not winning"
 output: html_document
 ---
+```{r}
+#install.packages("leaflet")
+```
+
+```{r}
+#install.packages("maps")
+```
+
+```{r}
+library(leaflet)
+library(shiny)
+library(dplyr)
+library("tidyverse")
+library("janitor")
+library(maps)
+```
+
+```{r}
+states <- map_data("state")
+cali_state <- states %>%
+  filter(region %in% c("california"))
+```
+
+
+```{r}
+data(countyMapEnv)
+```
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  
+)
+
+server <- function(input, output, session) {
+  
+}
+
+shinyApp(ui, server)
+```
 

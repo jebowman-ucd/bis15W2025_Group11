@@ -1,0 +1,39 @@
+---
+title: "literally losing it"
+output: html_document
+---
+```{r}
+install.packages("sf")
+```
+
+
+```{r}
+library(shiny)
+library(leaflet)
+
+```
+
+```{r}
+shapefile <- read_csv("data/bigfoot_updated_CAonly_noNA.csv")
+```
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  leafletOutput(outputId = "map")
+)
+
+server <- function(input, output, session) {
+  output$map <- renderLeaflet({
+    leaflet(data=bigfoot) %>% addTiles()%>%
+      addMarkers(lng = ~longitude, lat = ~latitude, popup = ~as.character(bigfoot$date), label = ~as.character(bigfoot$date))%>%
+      setView(lng = -121.771598, lat = 38.533867, zoom = 5.5) %>% #current center set to be Davis
+      addProviderTiles('Esri.WorldImagery') #you can add urls and other things
+      #addTiles()
+  })
+}
+
+shinyApp(ui, server)
+```
+
