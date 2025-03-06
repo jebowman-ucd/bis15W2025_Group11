@@ -61,7 +61,20 @@ bigfoot %>%
   ggsave(file="conditions.png", width = 15, height = 8, dpi=300)
 ```
 
+```{r}
+cali_locs <- bigfoot %>%
+  mutate(locations = case_when(latitude<=36.499998 ~"Southern",
+                                   latitude>36.499998 ~"Northern"))
+```
 
+```{r}
+cali_locs %>%
+  ggplot(aes(x=county, fill=locations))+
+  geom_bar()+
+  coord_flip()+
+  labs(title = "Bigfoot Sightings by County", x="County", y="Count")+
+ggsave(file="bigfootcounty.png", width = 12, height = 10, dpi=300)
+```
 
 
 

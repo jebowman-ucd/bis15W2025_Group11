@@ -10,11 +10,15 @@ install.packages("sf")
 ```{r}
 library(shiny)
 library(leaflet)
-
+library(sf)
 ```
 
 ```{r}
-shapefile <- read_csv("data/bigfoot_updated_CAonly_noNA.csv")
+bigfoot <- read_csv("data/bigfoot_updated_CAonly_noNA.csv")
+```
+https://data.cnra.ca.gov/dataset/california-counties1
+```{r}
+counties <- sf
 ```
 
 ```{r}
@@ -27,9 +31,9 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   output$map <- renderLeaflet({
     leaflet(data=bigfoot) %>% addTiles()%>%
-      addMarkers(lng = ~longitude, lat = ~latitude, popup = ~as.character(bigfoot$date), label = ~as.character(bigfoot$date))%>%
+      addMarkers(lng = ~longitude, lat = ~latitude, popup = ~as.character(classification), label = ~as.character(classification))%>%
       setView(lng = -121.771598, lat = 38.533867, zoom = 5.5) %>% #current center set to be Davis
-      addProviderTiles('Esri.WorldImagery') #you can add urls and other things
+      addProviderTiles('Esri.WorldImagery')
       #addTiles()
   })
 }
@@ -37,3 +41,30 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
+```{r}
+selectInput("x", 
+                "Select X Variable", 
+                choices = c("county", "date", "temperature_mid", "classification"), 
+                selected = "classification"),
+```
+
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  leafletOutput(outputId = "map")
+)
+
+server <- function(input, output, session) {
+  output$map <- renderLeaflet({
+    leaflet(data=bigfoot) %>% addTiles()%>%
+      addMarkers(lng = ~longitude, lat = ~latitude, popup = ~as.character(classification), label = ~as.character(classification))%>%
+      setView(lng = -121.771598, lat = 38.533867, zoom = 5.5) %>% #current center set to be Davis
+      addProviderTiles('Esri.WorldImagery')
+      #addTiles()
+  })
+}
+
+shinyApp(ui, server)
+```
