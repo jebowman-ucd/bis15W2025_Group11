@@ -1,0 +1,70 @@
+---
+title: "RC Bis15 Group 11 Shinyapp Map"
+output: html_document
+date: "2025-03-07"
+---
+
+```{r}
+library("shiny")
+library("leaflet")
+library("sf")
+library("shinythemes")
+```
+
+```{r}
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+```
+
+```{r}
+ui <- fluidPage(
+  theme = shinytheme("flatly"),
+  
+  titlePanel("My Bigfoot Sightings App"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("x", 
+                  "Select Classification", 
+                  choices = unique(bigfoot$classification), 
+                  selected = "Class A"),
+      selectInput("y", 
+                  "Select Weather", 
+                  choices = unique(bigfoot$conditions), 
+                  selected = "Clear")
+    ),
+    mainPanel(
+      leafletOutput(outputId = "map")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  output$map <- renderLeaflet({
+    
+    filtered_data <- bigfoot %>% 
+      dplyr::filter(classification == input$x) %>%
+      dplyr::filter(conditions == input$y)
+    
+    filtered_data %>% 
+      leaflet() %>% 
+      addTiles() %>%  # Optionally keep or remove this line if not needed
+      addCircleMarkers(
+        lng = ~longitude, 
+        lat = ~latitude, 
+        popup = ~as.character(bigfoot$date), 
+        label = ~as.character(bigfoot$date),
+        radius = 5,           
+        color = "blue",       
+        fillColor = "cyan",   
+        fillOpacity = 0.7     
+      ) %>%
+      setView(lng = -121.771598, 
+              lat = 38.533867, 
+              zoom = 5.5) %>%
+      addProviderTiles('Stamen.Terrain')
+  })
+}
+
+shinyApp(ui, server)
+```

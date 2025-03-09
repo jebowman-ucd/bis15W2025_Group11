@@ -3,7 +3,7 @@ title: "literally losing it"
 output: html_document
 ---
 ```{r}
-install.packages("sf")
+#install.packages("sf")
 ```
 
 
@@ -11,15 +11,52 @@ install.packages("sf")
 library(shiny)
 library(leaflet)
 library(sf)
+library("shinythemes")
+library(dplyr)
+library("tidyr")
 ```
 
 ```{r}
-bigfoot <- read_csv("data/bigfoot_updated_CAonly_noNA.csv")
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
 ```
 https://data.cnra.ca.gov/dataset/california-counties1
 ```{r}
-counties <- sf
+shape <- sf::st_read("California_Counties/California_Counties.shp")
 ```
+
+```{r}
+temp_shapefile <- tempfile()
+download.file("https://www2.census.gov/geo/tiger/TIGER2019/COUSUB/tl_2019_06_cousub.zip", temp_shapefile)
+unzip(temp_shapefile)
+
+sf_county <- read_sf('tl_2019_06_cousub.shp')
+```
+```{r}
+what <- st_drivers()
+```
+
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  leafletOutput(outputId = "map")
+)
+
+server <- function(input, output, session) {
+  output$map <- renderLeaflet({
+    leaflet(data=bigfoot) %>% addTiles()%>%
+      addMarkers(lng = ~longitude, lat = ~latitude, popup = ~as.character(classification), label = ~as.character(classification))%>%
+      setView(lng = -121.771598, lat = 38.533867, zoom = 5.5) %>% #current center set to be Davis
+      addProviderTiles('Esri.WorldImagery') %>%
+      addPolygons(color="black", fillOpacity = 0.5)
+      #addTiles()
+  })
+}
+
+shinyApp(ui, server)
+```
+
 
 ```{r}
 library(shiny)
@@ -42,29 +79,167 @@ shinyApp(ui, server)
 ```
 
 ```{r}
-selectInput("x", 
-                "Select X Variable", 
-                choices = c("county", "date", "temperature_mid", "classification"), 
-                selected = "classification"),
-```
-
-
-```{r}
-library(shiny)
-
 ui <- fluidPage(
-  leafletOutput(outputId = "map")
+  theme = shinytheme("flatly"),
+  
+  titlePanel("My Bigfoot Sightings App"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("x", 
+                  "Select Classification", 
+                  choices = unique(bigfoot$classification), 
+                  selected = "Class A"),
+      selectInput("y", 
+                  "Select Weather", 
+                  choices = unique(bigfoot$conditions), 
+                  selected = "Clear")
+    ),
+    mainPanel(
+      leafletOutput(outputId = "map")
+    )
+  )
 )
 
 server <- function(input, output, session) {
+  
   output$map <- renderLeaflet({
-    leaflet(data=bigfoot) %>% addTiles()%>%
-      addMarkers(lng = ~longitude, lat = ~latitude, popup = ~as.character(classification), label = ~as.character(classification))%>%
-      setView(lng = -121.771598, lat = 38.533867, zoom = 5.5) %>% #current center set to be Davis
-      addProviderTiles('Esri.WorldImagery')
-      #addTiles()
+    
+    filtered_data <- bigfoot %>% 
+      dplyr::filter(classification == input$x) %>%
+      dplyr::filter(conditions == input$y)
+    
+    filtered_data %>% 
+      leaflet(shape) %>% 
+      addTiles() %>%  # Optionally keep or remove this line if not needed
+      addCircleMarkers(
+        lng = ~longitude, 
+        lat = ~latitude, 
+        popup = ~as.character(bigfoot$date), 
+        label = ~as.character(bigfoot$date),
+        radius = 5,           
+        color = "blue",       
+        fillColor = "cyan",   
+        fillOpacity = 0.7     
+      ) %>%
+      setView(lng = -121.771598, 
+              lat = 38.533867, 
+              zoom = 5.5) %>%
+      addProviderTiles('Stamen.Terrain')
   })
 }
 
 shinyApp(ui, server)
 ```
+
+```{r}
+shp = st_read("California_Counties/California_Counties.shp", package="sf") %>%
+  st_sf(shp, sf_column_name = "geometry")
+```
+
+
+```{r}
+ui <- fluidPage(
+  theme = shinytheme("flatly"),
+  
+  titlePanel("My Bigfoot Sightings App"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("x", 
+                  "Select Classification", 
+                  choices = unique(bigfoot$classification), 
+                  selected = "Class A"),
+      selectInput("y", 
+                  "Select Weather", 
+                  choices = unique(bigfoot$conditions), 
+                  selected = "Clear")
+  
+    ),
+    mainPanel(
+      leafletOutput(outputId = "map")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  output$map <- renderLeaflet({
+    
+    filtered_data <- bigfoot %>% 
+      dplyr::filter(classification == input$x) %>%
+      dplyr::filter(conditions == input$y)
+      
+    
+    filtered_data %>% 
+      leaflet(sf_county) %>% 
+      addTiles() %>%  # Optionally keep or remove this line if not needed
+      addCircleMarkers(
+        lng = ~longitude, 
+        lat = ~latitude, 
+        popup = ~as.character(bigfoot$date), 
+        label = ~as.character(bigfoot$date),
+        radius = 5,           
+        color = "blue",       
+        fillColor = "cyan",   
+        fillOpacity = 0.7     
+      ) %>%
+      setView(lng = -121.771598, 
+              lat = 38.533867, 
+              zoom = 5.5) %>%
+      addPolygons(data=sf_county, color = "black", weight = 1, fillColor="thistle", opacity=0.7 )%>%
+      addProviderTiles('Stamen.Terrain')
+     
+  })
+}
+
+shinyApp(ui, server)
+```
+
+```{r}
+ui <- fluidPage(
+  theme = shinytheme("flatly"),
+  
+  titlePanel("My Bigfoot Sightings App"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("x", 
+                  "Select Classification", 
+                  choices = unique(bigfoot$classification), 
+                  selected = "Class A"),
+      selectInput("y", 
+                  "Select Weather", 
+                  choices = unique(bigfoot$conditions), 
+                  selected = "Clear")
+  
+    ),
+    mainPanel(
+      leafletOutput(outputId = "map")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  output$map <- renderLeaflet({
+    
+    filtered_data <- bigfoot %>% 
+      dplyr::filter(classification == input$x) %>%
+      dplyr::filter(conditions == input$y)
+      
+    
+    filtered_data %>% 
+      leaflet(sf_county) %>% 
+      setView(lng = -121.771598, 
+              lat = 38.533867, 
+              zoom = 5.5) %>%
+      addProviderTiles('Stamen.Terrain') %>%
+    addPolygons(data=sf_county, color = "black", weight = 0.5, fillColor="thistle", opacity=0.2 )
+     
+  })
+}
+
+shinyApp(ui, server)
+```
+
