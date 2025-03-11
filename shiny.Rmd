@@ -1,0 +1,293 @@
+---
+title: "Jenn workspace"
+output: html_document
+---
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+library("stringr")
+library(readr)
+library(data.table)
+library(ggmap)
+
+```
+
+```{r}
+
+#bigfoot_base <- read.csv("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/bis15W2025_Group11-main/data/bfro_updatedData2.csv")
+
+#bigfoot <- bigfoot_base %>%
+ # select(county, state,season,  title,  latitude,  longitude, date,  number,  classification,  temperature_high,   temperature_mid, temperature_low,  dew_point,  humidity,  cloud_cover,  moon_phase,  precip_intensity,  precip_probability,  precip_type,   pressure,   summary,  conditions,  uv_index,  visibility,   wind_bearing, wind_speed) %>%
+#  filter(state=="California") %>%
+#  filter(latitude != "NA")%>%
+#  filter(longitude != "NA")
+  
+#write.csv(bigfoot, "C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/bigfoot_updated_CAonly_noNA.csv")
+
+#bigfoot <- read.csv("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/bigfoot_updated_CAonly_noNA.csv")
+```
+
+
+#sightings map
+```{r}
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+
+
+
+bigfoot %>% 
+  select(latitude, longitude,) %>%  #f command is the buffer. 
+  summary()
+
+```
+
+```{r}
+register_stadiamaps("35c776b4-832b-4b73-bbec-f195a0bdbb2c", write = FALSE)
+lat <- c(32.72, 41.99)
+long <- c(-124.2, -116.5)
+bbox <- make_bbox(long, lat, f = 0.03)
+
+bigfootmap <- get_stadiamap(bbox, maptype = "stamen_terrain", zoom=7) #zoom impacts how large the map is in memory
+
+
+ggmap(bigfootmap)
+```
+
+```{r}
+map<- ggmap(bigfootmap) + 
+  geom_point(data = bigfoot, aes(longitude, latitude), size=0.4) +
+  labs(x= "Longitude", y= "Latitude", title="Bigfoot sightings") +
+  ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/sightings.png")
+
+
+```
+
+```{r}
+#weather work
+
+bigfoot %>% 
+  count(summary) %>%
+  arrange(-n)
+
+bigfoot %>% 
+  filter(summary != "")%>%
+count(summary) %>%
+  arrange(-n)%>%
+  pivot_wider(names_from = "summary", values_from = "n") %>%
+ summarise(across(contains("cloudy"), ~ sum(.x, na.rm = TRUE)))
+
+
+```
+
+```{r}
+#sightings by county, calc percentage of all CA sightings
+bigfoot %>%
+  count(county)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_CA_sightings = (n/total)*100)        
+          
+
+bigfoot %>%
+  ggplot(aes(x=county))+
+  geom_bar()+
+  coord_flip()+
+  labs(title = "Bigfoot Sightings by County", x="County", y="Count")
+
+
+```
+
+
+
+```{r}
+#sighting classifications
+
+
+
+bigfoot %>%
+  ggplot(aes(x=classification, fill=classification)) + 
+  geom_bar()  +     #good for counts
+  labs(title = "Bigfoot Sightings by Classification", x="Sighting classification", y="Count") #+
+
+   #ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/classifications.png", width=4, height=4)
+
+```
+
+```{r}
+#bigfoot by month
+bigfootDated <- bigfoot %>%
+  separate(date, into= c("month", "day", "year"), sep = "/") 
+
+
+bigfootDated %>%
+  count(year,classification)%>%
+  top_n(20, n) %>% 
+  ggplot(aes(x=year, y=n, fill=classification))+
+  geom_col() +  #specifies an x and y 
+    coord_flip()+
+  theme(axis.text.x = element_text(angle = 80, hjust = 1))+
+  labs(title = "Years with most bigfoot sightings", x="count", y="year")+
+ ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/top20years.png", width=4, height=4)
+
+
+bigfootDated %>%
+  count(month)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_sightings_month = (n/total)*100) 
+
+bigfootDated %>%
+  count(day)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_sightings_day = (n/total)*100) 
+
+```
+
+```{r}
+bigfoot %>% 
+  filter(conditions != "")%>%
+count(conditions) %>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_sightings_weather = (n/total)*100) 
+
+
+
+```
+
+
+
+```{r}
+#sightings by date
+
+glimpse(bigfoot)
+
+
+
+bigfootDated <- bigfoot %>%
+  separate(date, into= c("month", "day", "year"), sep = "/") 
+
+
+bigfootDated %>%
+  count(year,classification)%>%
+  top_n(20, n) %>% 
+  ggplot(aes(x=year, y=n, fill=classification))+
+  geom_col() +  #specifies an x and y 
+    coord_flip()+
+  theme(axis.text.x = element_text(angle = 80, hjust = 1))+
+  labs(title = "Years with most bigfoot sightings", x="count", y="year")+
+ ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/top20years.png", width=4, height=4)
+
+
+
+
+bigfootDated %>%
+  filter(year != "NA")%>%
+  count(month, day,classification)%>%
+  ggplot(aes(x=month, y=n, fill=classification))+
+  scale_x_discrete(limits= c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"))+
+  geom_col() +
+  labs(title = "months with most bigfoot sightings", x="month", y="Number of sightings")+
+  ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/months.png", width=6, height=4 )
+
+```
+
+
+
+
+
+
+```{r}
+
+glimpse(bigfoot)
+
+
+#Shiny App
+ui <- dashboardPage(
+  dashboardHeader(title = "SasqWatch"),
+  
+  ## Sidebar content
+  dashboardSidebar(
+    sidebarMenu(
+      
+      menuItem("Top 10 counties", 
+               tabName = "dashboard", 
+               icon = icon("dashboard")),
+      
+      menuItem("Most sights by month", 
+               tabName = "widgets", 
+               icon = icon("th"))
+    )
+    ),
+  
+  ## Body content
+  dashboardBody(
+    
+    tabItems()
+  
+      ## First tab content    
+      #tabItem(tabName = "dashboard",
+       # fluidRow(
+      #    box(plotOutput("plot1", height = 250)), # box is a container for the plot
+        #  box(title = "Controls", # box is a container for the controls
+         #     selectInput("taxon", 
+          #                "Select Taxon of Interest:", 
+           #               choices=unique(homerange$taxon))
+         # )
+        #  )
+        #  ),
+
+      ## Second tab item 
+      #tabItem(tabName = "widgets",
+       # fluidRow(
+        #  box(plotOutput("plot2", height = 250)), # box is a container for the plot
+         # box(title = "Controls", # box is a container for the controls
+          #    radioButtons("x", 
+           #    "Select Fill Variable", 
+            #   choices=c("trophic.guild", "thermoregulation"),
+             #  selected="trophic.guild")
+          #)
+          #)
+          #)
+          #)
+          )
+          )
+
+server <- function(input, output, session) {
+
+  output$plot1 <- renderPlot({
+
+ bigfootDated %>%
+  filter(year != "NA")%>%
+  count(month, day,classification)%>%
+  ggplot(aes(x=month, y=n, fill=classification))+
+  scale_x_discrete(limits= c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"))+
+  geom_col() +
+  labs(title = "months with most bigfoot sightings", x="month", y="Number of sightings")+
+  ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/months.png", width=6, height=4 )
+  })
+  
+    
+}
+
+shinyApp(ui, server)
+
+```
+
+
+```{r}
+
+library(shiny) 
+ui <- fluidPage(titlePanel("SasqWATCH"),
+                selectInput("x", 
+                            "Select Countu", 
+                            choices = unique(bigfoot$county), #instead of typing all options, we can use unique()
+                            selected="Amador County"),
+                plotOutput("plot", width="500px", height="400px")
+)
+server <- function(input, output){} 
+shinyApp(ui = ui, server = server)
+
+
+```
+
