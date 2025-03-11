@@ -1,0 +1,107 @@
+---
+title: "Jenn workspace"
+output: html_document
+---
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+library("stringr")
+library(readr)
+library(data.table)
+library(ggmap)
+
+
+```
+
+```{r}
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+
+#Shiny App
+ui <- dashboardPage(
+  dashboardHeader(title = "SasqWatch"),
+  
+  ## Sidebar content
+  dashboardSidebar(
+    sidebarMenu(
+      
+      menuItem("Top 10 counties", 
+               tabName = "dashboard", 
+               icon = icon("dashboard")),
+      
+      menuItem("Most sights by month", 
+               tabName = "widgets", 
+               icon = icon("th"))
+    )
+    ),
+  
+  ## Body content
+  dashboardBody(
+    
+    tabItems()
+  
+      ## First tab content    
+      #tabItem(tabName = "dashboard",
+       # fluidRow(
+      #    box(plotOutput("plot1", height = 250)), # box is a container for the plot
+        #  box(title = "Controls", # box is a container for the controls
+         #     selectInput("taxon", 
+          #                "Select Taxon of Interest:", 
+           #               choices=unique(homerange$taxon))
+         # )
+        #  )
+        #  ),
+
+      ## Second tab item 
+      #tabItem(tabName = "widgets",
+       # fluidRow(
+        #  box(plotOutput("plot2", height = 250)), # box is a container for the plot
+         # box(title = "Controls", # box is a container for the controls
+          #    radioButtons("x", 
+           #    "Select Fill Variable", 
+            #   choices=c("trophic.guild", "thermoregulation"),
+             #  selected="trophic.guild")
+          #)
+          #)
+          #)
+          #)
+          )
+          )
+
+server <- function(input, output, session) {
+
+  output$plot1 <- renderPlot({
+
+ bigfootDated %>%
+  filter(year != "NA")%>%
+  count(month, day,classification)%>%
+  ggplot(aes(x=month, y=n, fill=classification))+
+  scale_x_discrete(limits= c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"))+
+  geom_col() +
+  labs(title = "months with most bigfoot sightings", x="month", y="Number of sightings")+
+  ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/months.png", width=6, height=4 )
+  })
+  
+    
+}
+
+shinyApp(ui, server)
+
+```
+
+
+```{r}
+
+library(shiny) 
+ui <- fluidPage(titlePanel("SasqWATCH"),
+                selectInput("x", 
+                            "Select Countu", 
+                            choices = unique(bigfoot$county), #instead of typing all options, we can use unique()
+                            selected="Amador County"),
+                plotOutput("plot", width="500px", height="400px")
+)
+server <- function(input, output){} 
+shinyApp(ui = ui, server = server)
+
+
+```
+

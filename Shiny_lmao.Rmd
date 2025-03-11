@@ -1,0 +1,218 @@
+---
+title: "So not winning"
+output: html_document
+---
+
+```{r}
+library(shiny)
+library(leaflet)
+library(sf)
+library("shinythemes")
+library(dplyr)
+library("tidyr")
+library(shinydashboard)
+library("janitor")
+library("stringr")
+library('dbplyr')
+library('readr')
+library('data.table')
+
+bigfootmaps <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+
+temp_shapefile <- tempfile()
+download.file("https://www2.census.gov/geo/tiger/TIGER2019/COUSUB/tl_2019_06_cousub.zip", temp_shapefile)
+unzip(temp_shapefile)
+
+sf_county <- read_sf('tl_2019_06_cousub.shp')
+```
+
+```{r}
+library(shinydashboard)
+ui <- dashboardPage(
+   dashboardHeader(title = "Bigfoot App!"),
+  
+  ## Sidebar content
+  dashboardSidebar(
+    sidebarMenu(
+      
+      menuItem("Map", 
+               tabName = "map"),
+      
+      menuItem("SasqWATCH", 
+               tabName = "watch")
+    )
+    ),
+  
+  ## Body content
+  dashboardBody(
+    
+    tabItems(
+  
+      ## First tab content    
+      tabItem(tabName = "map",
+      fluidPage(
+  theme = shinytheme("flatly"),
+  
+  titlePanel("My Bigfoot Sightings Map"),
+box(
+      selectInput("x", 
+                  "Select Classification", 
+                  choices = unique(bigfoot$classification), 
+                  selected = "Class A"),
+      selectInput("y", 
+                  "Select Weather", 
+                  choices = unique(bigfoot$conditions), 
+                  selected = "Clear")
+  
+)
+),
+
+leafletOutput(outputId = "map1") #make sure this matches with the renderLeaflet in server output
+  ),
+ ## Second tab item 
+      tabItem(tabName = "watch",
+        fluidPage(
+box(title = "Plot Options", 
+          width = 3, #adjust the column width
+              
+                #input I'm trying to pass the input variables into a vector/df to use for the graph later
+                selectInput("a", 
+                            "Select County",
+                            choices = unique(bigfootDated$county), #instead of typing all options, we can use unique()
+                            selected="Amador County"),
+                selectInput("b", 
+                            "Select Month", 
+                            choices = c(1:12),
+                            selected="1"),
+                          
+                selectInput("c", 
+                            "Select day", 
+                            choices = c(1:31), 
+                            selected="1"),
+                plotOutput(
+
+                  "plot", width="500px", height="400px"),
+
+), # close the first box    
+
+
+
+
+box(title = "Plot of Penguins Data", width = 6, #adjust the column width and add title
+  plotOutput("plot", width = "500px", height = "400px")
+) # close the second box
+) # close the row         
+
+          )
+          )
+  )
+          )
+          
+
+
+server <- function(input, output, session) {
+
+  output$map1 <- renderLeaflet({
+    
+    filtered_data <- bigfoot %>% 
+      dplyr::filter(classification == input$x) %>%
+      dplyr::filter(conditions == input$y)
+      
+    
+    filtered_data %>% 
+      leaflet(sf_county) %>% 
+      addTiles() %>%  # Optionally keep or remove this line if not needed
+      addCircleMarkers(
+        lng = ~longitude, 
+        lat = ~latitude, 
+        popup = ~as.character(bigfoot$date), 
+        label = ~as.character(bigfoot$date),
+        radius = 5,           
+        color = "blue",       
+        fillColor = "cyan",   
+        fillOpacity = 0.7     
+      ) %>%
+      setView(lng = -121.771598, 
+              lat = 38.533867, 
+              zoom = 5.5) %>%
+      addPolygons(data=sf_county, color = "black", weight = 1, fillColor="thistle", opacity=0.7 )%>%
+      addProviderTiles('Stamen.Terrain')
+     
+  })
+  
+    output$plot <- renderPlot({
+    session$onSessionEnded(stopApp) # stop the app when we close it
+  
+  output$plot <- renderPlot({
+  user_vector <- reactiveValues()
+  #user_param<- input$a
+
+  
+value<-c(a,5,7)
+
+value$a <- bigfootDated %>%
+  count(county)%>%  
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  filter( county == "Amador County")%>%
+  mutate(perc_CA_sightings = (n/total)*100)    
+
+value$b <- bigfootDated %>%
+  count(month)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  filter(month=="8")%>%
+  mutate(perc_sightings_month = (n/total)*100)
+
+value$c <- bigfootDated %>%
+  count(day)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  filter(day== "7")%>%
+  mutate(perc_sightings_day = (n/total)*100)
+
+
+
+
+param<- c(input$a,input$b,input$c)
+value<- c(value$a[4],value$b[4],value$c[4])
+
+#trial %>% 
+ # mutate(across(param, value, as.double))
+
+print("PARAM")
+print(param)
+print("VALUE")
+print(value)
+
+param<-as.factor(param)
+value<-as.numeric(value)
+
+
+trial<- data.frame(param, value) 
+class(param)
+class(value)
+
+
+      v<- trial%>%
+          summarize(mean_val=mean(value))
+print(trial) 
+
+   
+ 
+trial %>%
+      ggplot(aes(x=param, y=value)) + 
+      geom_col() +
+         labs(x = "parameter", y = "percent of total sightings in california by parameter")+
+     ggtitle( paste("Calculated chance of seeing bigfoot ", v, "%"))    
+
+})
+   
+    
+  })
+    
+}
+
+shinyApp(ui, server)
+```
+

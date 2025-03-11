@@ -1,0 +1,159 @@
+---
+title: "Jenn workspace"
+output: html_document
+---
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+#install.packages('shinydashboard')
+#install.packages('janitor')
+#install.packages('ggmap')
+#install.packages('ggmap')
+#install.packages('shiny')
+library(shinydashboard)
+library("janitor")
+library("stringr")
+library('dbplyr')
+library('shiny')
+library('readr')
+library('data.table')
+#library(ggmap)
+```
+
+
+```{r}
+#library(shiny) 
+library('lubridate')
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+
+bigfootDated <- bigfoot%>%
+separate(date, into= c("month", "day", "year"), sep = "/")%>%
+  mutate(month=month.abb[as.numeric(month)])
+
+bigfoot$xx<- dmy(bigfoot$date)
+
+
+
+bigfootDated %>%
+mutate(month_full=month(month, label=TRUE, abbr=false)) 
+  
+
+
+
+ui <- dashboardPage(
+  dashboardHeader(title = "SasqWATCH"),
+  
+  dashboardSidebar(disable=T),
+  
+  dashboardBody(
+  
+    fluidRow(
+      box(title = "Plot Options", 
+          width = 3, #adjust the column width
+              
+                #input I'm trying to pass the input variables into a vector/df to use for the graph later
+                selectInput("a", 
+                            "Select County",
+                            choices = unique(bigfootDated$county), #instead of typing all options, we can use unique()
+                            selected="Amador County"),
+                selectInput("b", 
+                            "Select Month", 
+                            choices = c(1:12),
+                            selected="1"),
+                          
+                selectInput("c", 
+                            "Select day", 
+                            choices = c(1:31), 
+                            selected="1"),
+                plotOutput(
+
+                  "plot", width="500px", height="400px"),
+
+), # close the first box    
+
+
+
+
+box(title = "Plot of Penguins Data", width = 6, #adjust the column width and add title
+  plotOutput("plot", width = "500px", height = "400px")
+) # close the second box
+) # close the row
+) # close the dashboard body
+) # close the ui
+
+    
+server <- function(input, output, session) {
+  
+output$plot <- renderPlot({
+session$onSessionEnded(stopApp) # stop the app when we close it
+  
+  #output$plot <- renderPlot({
+  user_vector <- reactiveValues()
+  #user_param<- input$a
+
+  
+value<-c(a,5,7)
+
+value$a <- bigfootDated %>%
+  count(county)%>%  
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  filter( county == "Amador County")%>%
+  mutate(perc_CA_sightings = (n/total)*100)    
+
+value$b <- bigfootDated %>%
+  count(month)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  filter(month=="8")%>%
+  mutate(perc_sightings_month = (n/total)*100)
+
+value$c <- bigfootDated %>%
+  count(day)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  filter(day== "7")%>%
+  mutate(perc_sightings_day = (n/total)*100)
+
+
+
+
+param<- c(input$a,input$b,input$c)
+value<- c(value$a[4],value$b[4],value$c[4])
+
+#trial %>% 
+ # mutate(across(param, value, as.double))
+
+print("PARAM")
+print(param)
+print("VALUE")
+print(value)
+
+param<-as.factor(param)
+value<-as.numeric(value)
+
+
+trial<- data.frame(param, value) 
+class(param)
+class(value)
+
+
+      v<- trial%>%
+          summarize(mean_val=mean(value))
+print(trial) 
+
+   
+ 
+trial %>%
+      ggplot(aes(x=param, y=value)) + 
+      geom_col() +
+         labs(x = "parameter", y = "percent of total sightings in california by parameter")+
+     ggtitle( paste("Calculated chance of seeing bigfoot ", v, "%"))    
+
+})
+  
+
+}
+
+shinyApp(ui, server)
+```
+
