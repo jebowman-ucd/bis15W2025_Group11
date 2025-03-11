@@ -2,15 +2,19 @@
 library("tidyverse")
 library("janitor")
 ```
+```{r}
+my_palette <- paletteer_d("dutchmasters::little_street") 
+```
 
 
 ```{r}
-bigfoot<- read.csv("data/bigfoot_updated_CAonly_noNA.csv", na = c("NA", " ", ".", "-999"))
+bigfoot1<- read.csv("data/bigfoot_updated_CAonly_noNA.csv", na = c("NA", " ", ".", "-999"))
 ```
 
 ```{r}
-bigfoot %>%
+bigfoot1 %>%
   ggplot(aes(x=county))+
+  scale_fill_manual(values=my_palette)+
   geom_bar()+
   coord_flip()+
   labs(title = "Bigfoot Sightings by County", x="County", y="Count")+
@@ -18,7 +22,7 @@ ggsave(file="bigfootcounties.png", width = 12, height = 10, dpi=300)
 ```
 
 ```{r}
-cali %>%
+bigfoot1 %>%
   filter(precip_intensity!="NA") %>%
   ggplot(aes(precip_intensity))+
   geom_histogram(fill="thistle")+
@@ -44,25 +48,28 @@ cali2
 ```
 
 ```{r}
-bigfoot %>%
+bigfoot1 %>%
   ggplot(aes(temperature_mid))+
-  geom_histogram(fill="tan", na.rm=T, bins = 25, color="white")+
+  geom_histogram(na.rm=T, bins = 25, color="white")+
+  scale_fill_manual(values=my_palette)+
   labs(title = "Average Temperature Range During Recorded Sightings", x="Temperature (C)", y="Count")+
+  facet_wrap(~season)+
   ggsave(file="temp.png", width = 15, height = 8, dpi=300)
 ```
 
 ```{r}
-bigfoot %>%
+bigfoot1 %>%
   filter(conditions!=" ") %>%
   ggplot(aes(x=conditions, fill = conditions))+
-  geom_bar()+
+  geom_bar(color="black")+
+  scale_fill_manual(values=my_palette)+
   labs(title = "Sightings by Weather", x="Weather", y="Count")+
   coord_flip()+
   ggsave(file="conditions.png", width = 15, height = 8, dpi=300)
 ```
 
 ```{r}
-cali_locs <- bigfoot %>%
+cali_locs <- bigfoot1 %>%
   mutate(locations = case_when(latitude<=36.499998 ~"Southern",
                                    latitude>36.499998 ~"Northern"))
 ```
@@ -72,6 +79,7 @@ cali_locs %>%
   ggplot(aes(x=county, fill=locations))+
   geom_bar()+
   coord_flip()+
+  scale_fill_manual(values=my_palette)+
   labs(title = "Bigfoot Sightings by County", x="County", y="Count")+
 ggsave(file="bigfootcounty.png", width = 12, height = 10, dpi=300)
 ```
