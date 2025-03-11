@@ -1,0 +1,107 @@
+---
+title: "izzy_completed_graphs"
+output: html_document
+date: "2025-03-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+bigfoot <- read.csv("bfro_reports_geocoded.csv") %>% clean_names()
+```
+
+
+```{r}
+alchohol <- read_csv("alcohol_consumption.csv") %>% clean_names()
+```
+
+
+```{r}
+glimpse(alchohol)
+```
+
+
+```{r}
+glimpse(bigfoot)
+```
+
+```{r}
+bigfoot <-  bigfoot %>% 
+  mutate(county=str_remove(county, " County"))
+bigfoot
+```
+
+```{r}
+merged_data <- full_join(bigfoot, alchohol, by=c("state", "county"))
+```
+
+```{r}
+merged_data <- merged_data %>% 
+  select(-observed, -title, -fips, -location_details) %>% 
+  filter(latitude != "NA"& longitude != "NA")
+
+merged_data
+```
+
+```{r}
+top_counties <- merged_data %>%
+  filter(state == "California") %>% 
+  group_by(county, state) %>%
+  summarize(total_sightings = n()) %>%
+  arrange(desc(total_sightings)) %>%
+  head(10)
+
+top_counties
+```
+
+```{r}
+top_counties %>% 
+  ggplot(aes(x = reorder(county, total_sightings), y = total_sightings, fill=state)) +
+  geom_bar(stat = "identity") +
+  coord_flip() + 
+  labs(title = "Top 10 Counties with Most Bigfoot Sightings",
+       x = "County",
+       y = "Number of Sightings")
+```
+
+```{r}
+drinknig_in_cali <- merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county, percent_excessive_drinking) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n)
+  
+```
+
+
+```{r}
+drinknig_in_cali %>% 
+  ggplot(aes(x=percent_excessive_drinking, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)+
+  labs(title="Sightings by California County vs Excessive Drinking",
+       x="Percent Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
+```
+
+```{r}
+merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county) %>% 
+  summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
+  arrange(-n)
+
+
+```
+  
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

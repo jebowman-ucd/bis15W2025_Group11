@@ -103,14 +103,35 @@ cleaned_data <- full_join(bf_al_sa, al_rm , by = "state")
 cleaned_data %>% 
   ggplot(aes(x=mean_al, y=n))+
   geom_point()+
-  geom_smooth(method=lm, se=F)
+  geom_smooth(method=lm, se=F) +
+  labs(title="Sightings by State vs Average Excessive Drinking",
+       x="Percent Average Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
 ```
 
 ```{r}
 bf_al_co %>% 
+  filter(state == "California") %>% 
   ggplot(aes(x=percent_excessive_drinking, y=n))+
-  geom_point()+
-  geom_smooth(method=lm, se=F)
+  geom_point(color = "darkgreen")+
+  geom_smooth(method=lm, se=F)+
+  labs(title="Sightings by California County vs Excessive Drinking",
+       x="Percent Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
+```
+
+
+```{r}
+bf_al_co %>% 
+  ggplot(aes(x=percent_excessive_drinking, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)+
+  labs(title="Sightings by County vs Excessive Drinking",
+       x="Percent Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
 ```
 
 
