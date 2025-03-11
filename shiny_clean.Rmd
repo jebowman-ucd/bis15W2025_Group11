@@ -10,53 +10,11 @@ library(readr)
 library(data.table)
 library(ggmap)
 
-```
-
-
-```{r}
-#sightings by date
-
-glimpse(bigfoot)
-
-
-
-bigfootDated <- bigfoot %>%
-  separate(date, into= c("month", "day", "year"), sep = "/") 
-
-
-bigfootDated %>%
-  count(year,classification)%>%
-  top_n(20, n) %>% 
-  ggplot(aes(x=year, y=n, fill=classification))+
-  geom_col() +  #specifies an x and y 
-    coord_flip()+
-  theme(axis.text.x = element_text(angle = 80, hjust = 1))+
-  labs(title = "Years with most bigfoot sightings", x="count", y="year")+
- ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/top20years.png", width=4, height=4)
-
-
-
-
-bigfootDated %>%
-  filter(year != "NA")%>%
-  count(month, day,classification)%>%
-  ggplot(aes(x=month, y=n, fill=classification))+
-  scale_x_discrete(limits= c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"))+
-  geom_col() +
-  labs(title = "months with most bigfoot sightings", x="month", y="Number of sightings")+
-  ggsave("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/months.png", width=6, height=4 )
 
 ```
 
-
-
-
-
-
 ```{r}
-
-glimpse(bigfoot)
-
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
 
 #Shiny App
 ui <- dashboardPage(
