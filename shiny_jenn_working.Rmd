@@ -22,10 +22,21 @@ library('data.table')
 
 ```{r}
 #library(shiny) 
+library('lubridate')
 bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
 
 bigfootDated <- bigfoot%>%
-  separate(date, into= c("month", "day", "year"), sep = "/")
+separate(date, into= c("month", "day", "year"), sep = "/")%>%
+  mutate(month=month.abb[as.numeric(month)])
+
+bigfoot$xx<- dmy(bigfoot$date)
+
+
+
+bigfootDated %>%
+mutate(month_full=month(month, label=TRUE, abbr=false)) 
+  
+
 
 
 ui <- dashboardPage(
@@ -75,7 +86,7 @@ server <- function(input, output, session) {
 output$plot <- renderPlot({
 session$onSessionEnded(stopApp) # stop the app when we close it
   
-  output$plot <- renderPlot({
+  #output$plot <- renderPlot({
   user_vector <- reactiveValues()
   #user_param<- input$a
 
@@ -140,7 +151,6 @@ trial %>%
 
 })
   
-})
 
 }
 
