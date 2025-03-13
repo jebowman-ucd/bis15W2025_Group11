@@ -98,10 +98,120 @@ merged_data %>%
   filter(state == "California") %>% 
   group_by(county) %>% 
   summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
-  arrange(-n)
-
+  filter(n > 4) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x=avg_mid_temp, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)
 
 ```
   
+```{r}
+merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county) %>% 
+  summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
+  filter(n > 4) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x=avg_high_temp, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)
+```
+  
+```{r}
+merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county) %>% 
+  summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
+  filter(n > 4) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x=avg_low_temp, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)
+```
+  
+```{r}
+merged_data %>% 
+  group_by(state) %>% 
+  summarize(avg_excessive_drinking = mean(percent_excessive_drinking, na.rm=T), n=n()) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x = avg_excessive_drinking, y = n)) +
+  geom_point(alpha = 0.5, color = "darkgreen") +
+  geom_smooth(method=lm, se=F, color = "red")+
+  labs(title="Sightings by State vs Average Excessive Drinking",
+       x="Percent Average Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
+```
+  
+```{r}
+midpoints_temp <- merged_data %>%
+  mutate(
+    temp_range_mid = paste0(floor(temperature_mid / 6) * 6 - 3, "-", floor(temperature_mid / 6) * 6 + 3),
+    temp_range_low = paste0(floor(temperature_low/ 6) * 6 - 3, "-", floor(temperature_low / 6) * 6 + 3),
+    temp_range_high = paste0(floor(temperature_high / 6) * 6 - 3, "-", floor(temperature_high / 6) * 6 + 3),
+    temp_midpoint = (floor(temperature_mid / 6) * 6) 
+  )
+midpoints_temp
+```
+```{r}
+sightings_by_midtemp <- midpoints_temp %>%
+  group_by(temp_range, temp_midpoint) %>% 
+  summarize(n = n()) %>% 
 
+sightings_by_midtemp
+```
+
+```{r}
+sightings_by_midtemp %>% 
+  ggplot(aes(x=temp_range, y=n))+
+  geom_bar(stat="identity")
+
+```
+```{r}
+sightings_by_midtemp %>% 
+  ggplot(aes(x=temp_midpoint, y=n))+
+  geom_point()+
+  geom_smooth(method=lm, se=F, color = "red")
+```
+  
+```{r}
+merged_data %>% 
+  mutate(floored_mid_temps = floor(temperature_mid)) %>% 
+  count(floored_mid_temps) %>% 
+  arrange(floored_mid_temps) %>% 
+  filter(floored_mid_temps>=15 & n >=5) %>% 
+  ggplot(aes(x=floored_mid_temps, y=n))+
+  geom_point()+
+  geom_smooth(method=lm, se=F, color = "skyblue")
+  
+```
+  
+```{r}
+sightings_by_lowtemp <- midpoints_temp %>%
+  count(temp_range_low) %>% 
+  filter(temp_range_low >= 15) %>% 
+  arrange(-n)
+
+sightings_by_lowtemp
+```
+
+
+```{r}
+sightings_by_lowtemp %>% 
+  ggplot(aes(x=temp_range_low, y=n)) +
+  geom_bar(stat="identity")
+```
+```{r}
+sightings_by_hightemp <- midpoints_temp %>%
+  count(temp_range_high) %>% 
+  filter(n >= 5) %>% 
+  ggplot(aes(x=temp_range_high, y=n))+
+  geom_bar(stat="identity")
+  
+
+sightings_by_hightemp
+```
+  
+  
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
