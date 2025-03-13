@@ -25,11 +25,29 @@ unzip(temp_shapefile)
 
 sf_county <- read_sf('tl_2019_06_cousub.shp')
 ```
+```{r}
+bigfootmaps <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+
+bigfootDated_Jenn <- bigfootmaps %>%
+  separate(date, into= c("month", "day", "year"), sep = "/")
+
+#check for non-numeric entries
+as.numeric(bigfootDated_Jenn$month)
+
+#correct entry in weird date format
+bigfootDated_Jenn$month[5]
+bigfootDated_Jenn$month[5]<-11
+bigfootDated_Jenn$day[5]<- 10
+bigfootDated_Jenn$year[5]<- 1869
+bigfootDated_Jenn[5,]
+```
+
 
 ```{r}
 library(shinydashboard)
+library(shinythemes)
 ui <- dashboardPage(
-   dashboardHeader(title = "Bigfoot App!"),
+   dashboardHeader(title = "SASQWATCH"),
   
   ## Sidebar content
   dashboardSidebar(
@@ -38,8 +56,8 @@ ui <- dashboardPage(
       menuItem("Map", 
                tabName = "map"),
       
-      menuItem("SasqWATCH", 
-               tabName = "watch")
+      menuItem("Plan a sighting", 
+               tabName = "plan_a_sighting")
     )
     ),
   
@@ -57,11 +75,11 @@ ui <- dashboardPage(
 box(
       selectInput("x", 
                   "Select Classification", 
-                  choices = unique(bigfoot$classification), 
+                  choices = unique(bigfootmaps$classification), 
                   selected = "Class A"),
       selectInput("y", 
                   "Select Weather", 
-                  choices = unique(bigfoot$conditions), 
+                  choices = unique(bigfootmaps$conditions), 
                   selected = "Clear")
   
 )
@@ -69,8 +87,9 @@ box(
 
 leafletOutput(outputId = "map1") #make sure this matches with the renderLeaflet in server output
   ),
+
  ## Second tab item 
-      tabItem(tabName = "watch",
+      tabItem(tabName = "plan_a_sighting",
         fluidPage(
 box(title = "Plot Options", 
           width = 3, #adjust the column width
@@ -78,7 +97,7 @@ box(title = "Plot Options",
                 #input I'm trying to pass the input variables into a vector/df to use for the graph later
                 selectInput("a", 
                             "Select County",
-                            choices = unique(bigfootDated$county), #instead of typing all options, we can use unique()
+                            choices = unique(bigfootDated_Jenn$county), #instead of typing all options, we can use unique()
                             selected="Amador County"),
                 selectInput("b", 
                             "Select Month", 
@@ -96,9 +115,7 @@ box(title = "Plot Options",
 ), # close the first box    
 
 
-
-
-box(title = "Plot of Penguins Data", width = 6, #adjust the column width and add title
+box(title = "Check your chance of seeing bigfoot", width = 6, #adjust the column width and add title
   plotOutput("plot", width = "500px", height = "400px")
 ) # close the second box
 ) # close the row         
@@ -114,7 +131,7 @@ server <- function(input, output, session) {
 
   output$map1 <- renderLeaflet({
     
-    filtered_data <- bigfoot %>% 
+    filtered_data <- bigfootmaps %>% 
       dplyr::filter(classification == input$x) %>%
       dplyr::filter(conditions == input$y)
       
@@ -125,8 +142,8 @@ server <- function(input, output, session) {
       addCircleMarkers(
         lng = ~longitude, 
         lat = ~latitude, 
-        popup = ~as.character(bigfoot$date), 
-        label = ~as.character(bigfoot$date),
+        popup = ~as.character(bigfootmaps$date), 
+        label = ~as.character(bigfootmaps$date),
         radius = 5,           
         color = "blue",       
         fillColor = "cyan",   
@@ -145,30 +162,29 @@ server <- function(input, output, session) {
   
   output$plot <- renderPlot({
   user_vector <- reactiveValues()
-  #user_param<- input$a
 
   
 value<-c(a,5,7)
 
-value$a <- bigfootDated %>%
+value$a <- bigfootDated_Jenn %>%
   count(county)%>%  
   arrange(-n)%>% 
   mutate(total=sum(n))%>%
-  filter( county == "Amador County")%>%
+  filter( county == input$a)%>%
   mutate(perc_CA_sightings = (n/total)*100)    
 
-value$b <- bigfootDated %>%
+value$b <- bigfootDated_Jenn %>%
   count(month)%>%
   arrange(-n)%>% 
   mutate(total=sum(n))%>%
-  filter(month=="8")%>%
+  filter(month== input$b)%>%
   mutate(perc_sightings_month = (n/total)*100)
 
-value$c <- bigfootDated %>%
+value$c <- bigfootDated_Jenn %>%
   count(day)%>%
   arrange(-n)%>% 
   mutate(total=sum(n))%>%
-  filter(day== "7")%>%
+  filter(day== input$c)%>%
   mutate(perc_sightings_day = (n/total)*100)
 
 
@@ -177,8 +193,7 @@ value$c <- bigfootDated %>%
 param<- c(input$a,input$b,input$c)
 value<- c(value$a[4],value$b[4],value$c[4])
 
-#trial %>% 
- # mutate(across(param, value, as.double))
+
 
 print("PARAM")
 print(param)
@@ -192,11 +207,10 @@ value<-as.numeric(value)
 trial<- data.frame(param, value) 
 class(param)
 class(value)
+print(trial)
 
-
-      v<- trial%>%
-          summarize(mean_val=mean(value))
-print(trial) 
+      v<- c(trial$value[1]/trial$value[2]*trial$value[3])
+        
 
    
  
