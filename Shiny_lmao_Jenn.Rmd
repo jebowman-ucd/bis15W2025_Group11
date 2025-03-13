@@ -4,6 +4,7 @@ output: html_document
 ---
 
 ```{r}
+install.packages(DT)
 library(shiny)
 library(leaflet)
 library(sf)
@@ -102,33 +103,28 @@ box(title = "Plot Options",
                 selectInput("a", 
                             "Select County",
                             choices = sort(unique(bigfootDated_Jenn$county)), #instead of typing all options, we can use unique()
-                            selected="Amador County"),
+                            selected="Tulare County"),
                 selectInput("b", 
                             "Select Month", 
                             choices = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
-                            selected="Jan"),
+                            selected="All"),
                           
                 selectInput("c", 
                             "Select day", 
                             choices = c(1:31), 
-                            selected="1"),
+                            selected="All"),
            
     
     ),
-box(title = "Check your chance of seeing bigfoot", width = 8, #adjust the column width and add title
+box(title = "What're the odds?", width = 8, #adjust the column width and add title
      plotOutput( "plot", width="350px", height="400px"), 
     ), # close the second box  
-
+ DT::dataTableOutput("table")
 ), # close the first box    
 
 
 
 br(),
- box(title = "history", width = 3, height = "150px",
-         column(3,
-          tableOutput('table') 
-
-
       ) 
 
 
@@ -136,8 +132,7 @@ br(),
 
           )
           )
-  )
-)
+
 
           
 
@@ -174,7 +169,8 @@ server <- function(input, output, session) {
   
     output$plot <- renderPlot({
     session$onSessionEnded(stopApp) # stop the app when we close it
-  
+  theme = shinytheme("cerulean")
+
   output$plot <- renderPlot({
   user_vector <- reactiveValues()
 
@@ -224,29 +220,32 @@ class(param)
 class(value)
 print(trial)
 
-      v<- c(trial$value[1]/trial$value[2]*trial$value[3])
-   
+      v<- c(trial$value[2]/trial$value[1]/trial$value[3])
+
+      
  
 trial %>%
       ggplot(aes(x=param, y=value)) + 
       geom_col() +
          labs(x = "parameter", y = "percent of total sightings in california by parameter")+
-     ggtitle(paste("Calculated chance of seeing bigfoot ", v, "%"))    
+     ggtitle(paste("Estimated chance of seeing bigfoot \n based on historic sightings: ", v, "%")) 
+ })
+br()
 
+  output$table <- DT::renderDataTable(DT::datatable({
+   data<- bigfootDated2
+   
+    data <- bigfootDated2%>%
+    select(county, month, day, classification, conditions)%>%
+    filter(county == input$a)%>%
+      filter(month == input$b)
+    data
+  }))     
 
-
-output$table <- renderTable(bigfootDated2, select(bigfootDated2$classification), filter(bigfootDated2classification == "Class A")) 
-
-
-
-
-
-    
-  })
 })
    
     
-#  })
+ 
     
 }
 
