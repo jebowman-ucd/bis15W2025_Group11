@@ -106,9 +106,9 @@ n_distinct(bigfoot1$county)
 ```
 
 ```{r}
-bigfootmaps <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
 
-bigfootDated_Jenn <- bigfootmaps %>%
+bigfootDated_Jenn <- bigfoot %>%
   separate(date, into= c("month", "day", "year"), sep = "/")
 
 #check for non-numeric entries
@@ -144,3 +144,17 @@ bigfootDated_Jenn %>%
   group_by(month) %>%
   summarize(total=n())
 ```
+
+```{r}
+bigfootDated_Jenn %>%
+  filter(year != "NA") %>%
+  count(month, day, classification) %>%
+  ggplot(aes(x=month, y=n, fill=classification))+
+  scale_x_discrete(limits=c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"))+
+  scale_fill_manual(values=my_palette)+
+  labs(title = "Bigfoot Sightings By Month", x="Month", y="Sightings Count")+
+  theme(plot.title = element_text(size=rel(3), hjust=.5), axis.title.x = element_text(size = 25, color = "black"), axis.title.y = element_text(size = 25, color = "black"), legend.text=element_text(size=rel(2)),legend.key.size = unit(1, "cm"))+
+  geom_col()+
+  ggsave(file="months.png", width = 10, height = 7, dpi=300)
+```
+
