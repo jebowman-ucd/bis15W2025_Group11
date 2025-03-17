@@ -100,7 +100,6 @@ cali_locs %>%
 ```
 `
 
-
 ```{r}
 n_distinct(bigfoot1$county)
 ```
@@ -120,29 +119,6 @@ bigfootDated_Jenn$month[5]<-11
 bigfootDated_Jenn$day[5]<- 10
 bigfootDated_Jenn$year[5]<- 1869
 bigfootDated_Jenn[5,]
-```
-
-```{r}
-bigfootDated_Jenn %>%
-  factor(month, levels = 12) %>%
-  ggplot(aes(x=month, fill=classification))+
-  geom_histogram(stat='count')+
-  scale_fill_manual(values=my_palette)+
-  labs(title = "Bigfoot Sightings By Month", x="Month", y="Sightings Count")+
-  theme(plot.title = element_text(size=rel(3), hjust=.5), axis.title.x = element_text(size = 25, color = "black"), axis.title.y = element_text(size = 25, color = "black"), legend.text=element_text(size=rel(2)),legend.key.size = unit(1, "cm"))+
-  ggsave(file="months.png", width = 10, height = 10, dpi=300)
-```
-```{r}
-bigfootDated_Jenn %>%
-  ggplot(aes(x=month))+
-  geom_bar()
-```
-
-
-```{r}
-bigfootDated_Jenn %>%
-  group_by(month) %>%
-  summarize(total=n())
 ```
 
 ```{r}
