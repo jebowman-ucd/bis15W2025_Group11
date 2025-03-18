@@ -14,13 +14,31 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r}
-bigfoot <- read.csv("bfro_reports_geocoded.csv") %>% clean_names()
+```{r message=FALSE, warning=FALSE}
+library("tidyverse")
+library("janitor")
+library("ggplot2")
+library(paletteer)
 ```
 
 
 ```{r}
-alchohol <- read_csv("alcohol_consumption.csv") %>% clean_names()
+bigfoot <- read.csv("~/Desktop/bis15W2025_Group11/data/bfro_reports_geocoded.csv") %>% clean_names()
+```
+
+
+```{r}
+alchohol <- read.csv("~/Desktop/bis15W2025_Group11/data/alcohol_consumption.csv") %>% clean_names()
+```
+
+```{r}
+names(alchohol)[names(alchohol) == "x_excessive_drinking"] <- "percent_excessive_drinking"
+```
+
+
+```{r}
+my_palette <- paletteer_d("dutchmasters::little_street")
+#scale_fill_manual(values=my_palette)
 ```
 
 
@@ -56,8 +74,9 @@ top_counties <- merged_data %>%
   filter(state == "California") %>% 
   group_by(county, state) %>%
   summarize(total_sightings = n()) %>%
-  arrange(desc(total_sightings)) %>%
-  head(10)
+  arrange(desc(total_sightings)) %>% 
+  filter(total_sightings>=5 )
+
 
 top_counties
 ```
@@ -102,7 +121,11 @@ merged_data %>%
   arrange(-n) %>% 
   ggplot(aes(x=avg_mid_temp, y=n))+
   geom_point(color = "black")+
-  geom_smooth(method=lm, se=F)
+  geom_smooth(method=lm, se=F)+ 
+  labs(title="Average Middle Temp vs Sightings",
+       x="Average Middle Temp",
+       y="Number of Sightings")+
+  theme_classic()
 
 ```
   
@@ -115,7 +138,11 @@ merged_data %>%
   arrange(-n) %>% 
   ggplot(aes(x=avg_high_temp, y=n))+
   geom_point(color = "black")+
-  geom_smooth(method=lm, se=F)
+  geom_smooth(method=lm, se=F)+ 
+  labs(title="Average High Temp vs Sightings",
+       x="Average High Temp",
+       y="Number of Sightings")+
+  theme_classic()
 ```
   
 ```{r}
@@ -127,7 +154,11 @@ merged_data %>%
   arrange(-n) %>% 
   ggplot(aes(x=avg_low_temp, y=n))+
   geom_point(color = "black")+
-  geom_smooth(method=lm, se=F)
+  geom_smooth(method=lm, se=F)+
+  labs(title="Average Low Temp vs Sightings",
+       x="Average Low Temp",
+       y="Number of Sightings")+
+  theme_classic()
 ```
   
 ```{r}
@@ -136,8 +167,8 @@ merged_data %>%
   summarize(avg_excessive_drinking = mean(percent_excessive_drinking, na.rm=T), n=n()) %>% 
   arrange(-n) %>% 
   ggplot(aes(x = avg_excessive_drinking, y = n)) +
-  geom_point(alpha = 0.5, color = "darkgreen") +
-  geom_smooth(method=lm, se=F, color = "red")+
+  geom_point( color = "black") +
+  geom_smooth(method=lm, se=F, color = "blue")+
   labs(title="Sightings by State vs Average Excessive Drinking",
        x="Percent Average Excessive Drinking",
        y="Number of Sightings")+
@@ -146,6 +177,7 @@ merged_data %>%
   
 ```{r}
 midpoints_temp <- merged_data %>%
+  filter(state == "California") %>% 
   mutate(
     temp_range_mid = paste0(floor(temperature_mid / 6) * 6 - 3, "-", floor(temperature_mid / 6) * 6 + 3),
     temp_range_low = paste0(floor(temperature_low/ 6) * 6 - 3, "-", floor(temperature_low / 6) * 6 + 3),
@@ -154,18 +186,31 @@ midpoints_temp <- merged_data %>%
   )
 midpoints_temp
 ```
+
+```{r}
+#barplot(rep(1,6), axes=FALSE, col=my_palette)
+```
+
+
+
+
 ```{r}
 sightings_by_midtemp <- midpoints_temp %>%
-  group_by(temp_range, temp_midpoint) %>% 
+  group_by(temp_range_mid, temp_midpoint) %>% 
   summarize(n = n()) %>% 
-
+  filter(n>=5 & temp_midpoint >= 15)
 sightings_by_midtemp
+
 ```
 
 ```{r}
 sightings_by_midtemp %>% 
-  ggplot(aes(x=temp_range, y=n))+
-  geom_bar(stat="identity")
+  ggplot(aes(x=temp_range_mid, y=n))+
+  geom_bar(stat="identity", fill = "#9D3D2DFF")+
+  labs(title="Middle Temperature vs Sightings",
+       x="Middle Temperature(F)",
+       y="Number of Sightings")+
+  theme_classic()
 
 ```
 ```{r}
@@ -198,20 +243,53 @@ sightings_by_lowtemp
 
 
 ```{r}
-sightings_by_lowtemp %>% 
+sightings_by_lowtemp %>%
+  filter(temp_range_low != "3-9" & temp_range_low != "9-15" & temp_range_low != "NA-NA") %>% 
   ggplot(aes(x=temp_range_low, y=n)) +
-  geom_bar(stat="identity")
+  geom_bar(stat="identity", fill = "#9D3D2DFF")+
+  labs(title="Low Temperature vs Sightings",
+       x="Low Temperature(F)",
+       y="Number of Sightings")+
+  theme_classic()
 ```
+
+
 ```{r}
 sightings_by_hightemp <- midpoints_temp %>%
   count(temp_range_high) %>% 
   filter(n >= 5) %>% 
-  ggplot(aes(x=temp_range_high, y=n))+
-  geom_bar(stat="identity")
+  filter(temp_range_high != "NA-NA" & temp_range_high != "9-15") %>% 
+  ggplot(aes(x=temp_range_high, y=n, fill = temp_range_high))+
+  geom_bar(stat="identity", fill = "#9D3D2DFF")+
+  labs(title="High Temperature vs Sightings",
+       x="High Temperature(F)",
+       y="Number of Sightings")+
+  theme_classic()
   
-
 sightings_by_hightemp
 ```
   
+```{r}
+merged_data %>% 
+  count(state) %>% 
+  filter(n >= 5) %>% 
+  arrange(-n) %>% 
+  head(5) %>% 
+  ggplot(aes(x=state, y=n, fill = state))+
+  geom_bar(stat="identity")+
+  scale_fill_manual(values=my_palette)
+  
+
+```
+
+
+```{r}
+merged_data %>% 
+  count(state) %>% 
+  filter(n >= 5) %>% 
+  summarize(total_sightings = sum(n,na.rm = T))
+```
+
+
   
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
