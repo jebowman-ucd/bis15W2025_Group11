@@ -1,0 +1,502 @@
+---
+title: "Group 11 Project code"
+output: html_document
+---
+```{r message=FALSE, warning=FALSE}
+#install.packages("paletteer")
+library("tidyverse")
+library("janitor")
+library("stringr")
+library("readr")
+library("data.table")
+library("ggmap")
+library("paletteer")
+library("dplyr")
+library("ggplot2")
+```
+
+```{r}
+#Read the file that is far too large, save as a smaller csv
+
+#bigfoot_base <- read.csv("C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/bis15W2025_Group11-main/data/bfro_updatedData2.csv")
+
+#bigfoot <- bigfoot_base %>%
+ # select(county, state,season,  title,  latitude,  longitude, date,  number,  classification,  temperature_high,   temperature_mid, temperature_low,  dew_point,  humidity,  cloud_cover,  moon_phase,  precip_intensity,  precip_probability,  precip_type,   pressure,   summary,  conditions,  uv_index,  visibility,   wind_bearing, wind_speed) %>%
+#  filter(state=="California") %>%
+#  filter(latitude != "NA")%>%
+#  filter(longitude != "NA")
+  
+#write.csv(bigfoot, "C:/Users/Jennifer/Documents/GitHub/bis15W2025_Group11/data/bigfoot_updated_CAonly_noNA.csv")
+
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+```
+
+
+#sightings map
+```{r}
+bigfoot <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
+
+bigfoot %>% 
+  select(latitude, longitude,) %>%  
+  summary()
+
+```
+
+```{r}
+register_stadiamaps("35c776b4-832b-4b73-bbec-f195a0bdbb2c", write = FALSE)
+lat <- c(32.72, 41.99)
+long <- c(-124.2, -116.5)
+bbox <- make_bbox(long, lat, f = 0.03)
+
+bigfootmap <- get_stadiamap(bbox, maptype = "stamen_terrain", zoom=7) #zoom impacts how large the map is in memory
+
+
+ggmap(bigfootmap)
+```
+
+```{r}
+map<- ggmap(bigfootmap) + 
+  geom_point(data = bigfoot, aes(longitude, latitude), size=0.4) +
+  labs(x= "Longitude", y= "Latitude", title="Bigfoot sightings") #+
+  #ggsave("graphs/sightings.png")
+
+map
+```
+
+```{r}
+#sightings by county, calc percentage of all CA sightings
+bigfoot %>%
+  count(county)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_CA_sightings = (n/total)*100)        
+  
+bigfoot %>%
+  ggplot(aes(x=county))+
+  geom_bar()+
+  coord_flip()+
+  labs(title = "Bigfoot Sightings by County", x="County", y="Count")
+
+```
+
+
+```{r}
+#sighting classifications
+
+bigfoot %>%
+  ggplot(aes(x=classification, fill=classification)) + 
+  geom_bar()  +     #good for counts
+  labs(title = "Bigfoot Sightings by Classification", x="Sighting classification", y="Count") #+
+   #ggsave("graphs/classifications.png", width=4, height=4)
+
+```
+
+```{r}
+#bigfoot by month
+bigfootDated <- bigfoot %>%
+  separate(date, into= c("month", "day", "year"), sep = "/") 
+
+
+bigfootDated %>%
+  count(year,classification)%>%
+  top_n(20, n) %>% 
+  ggplot(aes(x=year, y=n, fill=classification))+
+  geom_col() +  #specifies an x and y 
+    coord_flip()+
+  theme(axis.text.x = element_text(angle = 80, hjust = 1))+
+  labs(title = "Years with most bigfoot sightings", x="count", y="year") #+
+# ggsave("graphs/top20years.png", width=4, height=4)
+
+
+bigfootDated %>%
+  count(month)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_sightings_month = (n/total)*100) 
+
+bigfootDated %>%
+  count(day)%>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_sightings_day = (n/total)*100) 
+
+```
+
+```{r}
+#bigfoot sightings by conditions
+bigfoot %>% 
+  filter(conditions != "")%>%
+count(conditions) %>%
+  arrange(-n)%>% 
+  mutate(total=sum(n))%>%
+  mutate(perc_sightings_weather = (n/total)*100) 
+```
+
+```{r}
+#sightings by date
+
+glimpse(bigfoot)
+
+bigfootDated <- bigfoot %>%
+  separate(date, into= c("month", "day", "year"), sep = "/") 
+
+
+bigfootDated %>%
+  count(year,classification)%>%
+  top_n(20, n) %>% 
+  ggplot(aes(x=year, y=n, fill=classification))+
+  geom_col() +  #specifies an x and y 
+    coord_flip()+
+  theme(axis.text.x = element_text(angle = 80, hjust = 1))+
+  labs(title = "Years with most bigfoot sightings", x="count", y="year")#+
+ #ggsave("graphs/top20years.png", width=4, height=4)
+
+bigfootDated %>%
+  filter(year != "NA")%>%
+  count(month, day,classification)%>%
+  ggplot(aes(x=month, y=n, fill=classification))+
+  scale_x_discrete(limits= c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"))+
+  geom_col() +
+  labs(title = "months with most bigfoot sightings", x="month", y="Number of sightings")#+
+  #ggsave("graphs/months.png", width=6, height=4 )
+
+```
+
+
+
+```{r}
+my_palette <- paletteer_d("dutchmasters::little_street") 
+
+
+bigfoot1<- read.csv("data/bigfoot_updated_CAonly_noNA.csv", na = c("NA", " ", ".", "-999"))
+```
+
+```{r}
+#Bigfoot sightings by season
+bigfoot1 %>%
+  filter(season!="Unknown") %>%
+  ggplot(aes(x=season, fill = season))+
+  geom_bar()+
+  scale_fill_manual(values=my_palette)+
+  theme(plot.title = element_text(size=rel(3), hjust=.5), axis.title.x = element_text(size = 25, color = "black"), axis.title.y = element_text(size = 25, color = "black"), legend.text=element_text(size=rel(2)),legend.key.size = unit(1, "cm"))+
+  labs(title = "California Bigfoot Sightings by Season", x="Season", y="Count")#+
+  #ggsave(file="graphs/seasons.png", width = 12, height = 10, dpi=300)
+  
+```
+
+```{r}
+#bigfoot sightings by temperature
+bigfoot1 %>%
+  ggplot(aes(temperature_mid))+
+  geom_histogram(na.rm=T, bins = 25, color="white")+
+  scale_fill_manual(values=my_palette)+
+  labs(title = "Average Temperature Range During Recorded Sightings", x="Temperature (C)", y="Count")+
+  facet_wrap(~season)#+
+  #ggsave(file="temp.png", width = 15, height = 8, dpi=300)
+```
+
+```{r}
+#bigfoot sightings by conditions
+bigfoot1 %>%
+  filter(conditions!=" ") %>%
+  ggplot(aes(x=conditions, fill = conditions))+
+  geom_bar(color="black")+
+  scale_fill_manual(values=my_palette)+
+  labs(title = "Sightings by Weather", x="Weather", y="Count")+
+  theme(legend.position="top")+
+  coord_flip()+
+  theme(plot.title = element_text(size=rel(3), hjust=.5), axis.title.x = element_text(size = 25, color = "black"), axis.title.y = element_text(size = 25, color = "black"), legend.text=element_text(size=rel(1)),legend.key.size = unit(0.6, "cm"))#+
+  #ggsave(file="graphs/conditions.png", width = 10, height = 9, dpi=300)
+```
+
+```{r}
+#bigfoot sightings by county
+cali_locs <- bigfoot1 %>%
+  mutate(locations = case_when(latitude<=36.499998 ~"Southern",
+                                   latitude>36.499998 ~"Northern"))
+```
+```{r}
+ cali_locs %>%
+  group_by(county) %>%
+  summarize(n=n())%>%
+  filter(n>=5)
+
+cali_county <- cali_locs %>%
+  group_by(county) %>%
+  mutate(n=n())%>%
+  filter(n>=5)
+
+cali_county
+
+
+cali_county %>%
+  ggplot(aes(x=county, fill=locations))+
+  geom_bar()+
+  coord_flip()+
+  scale_fill_manual(values=my_palette)+
+  labs(title = "Bigfoot Sightings by County", x="County", y="Count")+
+  theme(plot.title = element_text(size=rel(3), hjust=.5), axis.title.x = element_text(size = 25, color = "black"), axis.title.y = element_text(size = 25, color = "black"), legend.text=element_text(size=rel(2)),legend.key.size = unit(1, "cm"))#+
+#ggsave(file="graphs/bigfootcounty.png", width = 12, height = 10, dpi=300)
+
+
+cali_locs %>%
+  ggplot(aes(x=classification, fill=classification))+
+   scale_fill_manual(values=my_palette)+
+  geom_bar()+
+  labs(title = "Bigfoot Sightings By Classification", x="Classification", y="Sightings Count")+
+  theme(plot.title = element_text(size=rel(3), hjust=.5), axis.title.x = element_text(size = 25, color = "black"), axis.title.y = element_text(size = 25, color = "black"), legend.text=element_text(size=rel(2)),legend.key.size = unit(1, "cm"))#+
+  #ggsave(file="graphs/classificationwithcolor.png", width = 10, height = 10, dpi=300)
+
+
+n_distinct(bigfoot1$county)
+```
+
+
+
+```{r}
+bigfoot2 <- read.csv("data/bfro_reports_geocoded.csv") %>% clean_names()
+
+
+alchohol <- read.csv("data/alcohol_consumption.csv") %>% clean_names()
+
+
+names(alchohol)[names(alchohol) == "x_excessive_drinking"] <- "percent_excessive_drinking"
+
+
+my_palette <- paletteer_d("dutchmasters::little_street")
+#scale_fill_manual(values=my_palette)
+```
+
+
+```{r}
+#glimpse(alchohol)
+
+#glimpse(bigfoot2)
+
+bigfoot2 <-  bigfoot2 %>% 
+  mutate(county=str_remove(county, " County"))
+```
+
+```{r}
+#join bigfoot data with alcohol data by state and county
+merged_data <- full_join(bigfoot2, alchohol, by=c("state", "county"))
+
+
+merged_data <- merged_data %>% 
+  select(-observed, -title, -fips, -location_details) %>% 
+  filter(latitude != "NA"& longitude != "NA")
+```
+
+```{r}
+top_counties <- merged_data %>%
+  filter(state == "California") %>% 
+  group_by(county, state) %>%
+  summarize(total_sightings = n()) %>%
+  arrange(desc(total_sightings)) %>% 
+  filter(total_sightings>=5 )
+
+top_counties
+```
+
+```{r}
+#sightings by county
+top_counties %>% 
+  ggplot(aes(x = reorder(county, total_sightings), y = total_sightings, fill=state)) +
+  geom_bar(stat = "identity") +
+  coord_flip() + 
+  labs(title = "Top 10 Counties with Most Bigfoot Sightings",
+       x = "County",
+       y = "Number of Sightings")
+```
+
+```{r}
+#alcohol excessive drinking by county
+drinknig_in_cali <- merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county, percent_excessive_drinking) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n)
+
+drinknig_in_cali %>% 
+  ggplot(aes(x=percent_excessive_drinking, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)+
+  labs(title="Sightings by California County vs Excessive Drinking",
+       x="Percent Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
+```
+
+```{r}
+#temperature sightings
+
+#average mid temp
+merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county) %>% 
+  summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
+  filter(n > 4) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x=avg_mid_temp, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)+ 
+  labs(title="Average Middle Temp vs Sightings",
+       x="Average Middle Temp",
+       y="Number of Sightings")+
+  theme_classic()
+
+#average high temp
+merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county) %>% 
+  summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
+  filter(n > 4) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x=avg_high_temp, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)+ 
+  labs(title="Average High Temp vs Sightings",
+       x="Average High Temp",
+       y="Number of Sightings")+
+  theme_classic()
+
+#average low temp
+merged_data %>% 
+  filter(state == "California") %>% 
+  group_by(county) %>% 
+  summarise(avg_mid_temp = mean(temperature_mid, na.rm =T), avg_high_temp = mean(temperature_high, na.rm = T), avg_low_temp = mean(temperature_low, na.rm=T), n = n()) %>% 
+  filter(n > 4) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x=avg_low_temp, y=n))+
+  geom_point(color = "black")+
+  geom_smooth(method=lm, se=F)+
+  labs(title="Average Low Temp vs Sightings",
+       x="Average Low Temp",
+       y="Number of Sightings")+
+  theme_classic()
+```
+  
+#temperature assessment
+```{r}
+midpoints_temp <- merged_data %>%
+  filter(state == "California") %>% 
+  mutate(
+    temp_range_mid = paste0(floor(temperature_mid / 6) * 6 - 3, "-", floor(temperature_mid / 6) * 6 + 3),
+    temp_range_low = paste0(floor(temperature_low/ 6) * 6 - 3, "-", floor(temperature_low / 6) * 6 + 3),
+    temp_range_high = paste0(floor(temperature_high / 6) * 6 - 3, "-", floor(temperature_high / 6) * 6 + 3),
+    temp_midpoint = (floor(temperature_mid / 6) * 6) 
+  )
+
+```
+
+```{r}
+sightings_by_midtemp <- midpoints_temp %>%
+  group_by(temp_range_mid, temp_midpoint) %>% 
+  summarize(n = n(), .groups= 'keep') %>% 
+  filter(n>=5 & temp_midpoint >= 15)
+
+
+```
+
+```{r}
+sightings_by_midtemp %>% 
+  ggplot(aes(x=temp_range_mid, y=n))+
+  geom_bar(stat="identity", fill = "#9D3D2DFF")+
+  labs(title="Middle Temperature vs Sightings",
+       x="Middle Temperature(F)",
+       y="Number of Sightings")+
+  theme_classic()
+
+```
+
+```{r}
+sightings_by_midtemp %>% 
+  ggplot(aes(x=temp_midpoint, y=n))+
+  geom_point()+
+  geom_smooth(method=lm, se=F, color = "red")
+```
+  
+```{r}
+merged_data %>% 
+  mutate(floored_mid_temps = floor(temperature_mid)) %>% 
+  count(floored_mid_temps) %>% 
+  arrange(floored_mid_temps) %>% 
+  filter(floored_mid_temps>=15 & n >=5) %>% 
+  ggplot(aes(x=floored_mid_temps, y=n))+
+  geom_point()+
+  geom_smooth(method=lm, se=F, color = "skyblue")
+  
+```
+  
+```{r}
+sightings_by_lowtemp <- midpoints_temp %>%
+  count(temp_range_low) %>% 
+  filter(temp_range_low >= 15) %>% 
+  arrange(-n)
+
+sightings_by_lowtemp
+```
+
+```{r}
+sightings_by_lowtemp %>%
+  filter(temp_range_low != "3-9" & temp_range_low != "9-15" & temp_range_low != "NA-NA") %>% 
+  ggplot(aes(x=temp_range_low, y=n)) +
+  geom_bar(stat="identity", fill = "#9D3D2DFF")+
+  labs(title="Low Temperature vs Sightings",
+       x="Low Temperature(F)",
+       y="Number of Sightings")+
+  theme_classic()
+```
+
+```{r}
+sightings_by_hightemp <- midpoints_temp %>%
+  count(temp_range_high) %>% 
+  filter(n >= 5) %>% 
+  filter(temp_range_high != "NA-NA" & temp_range_high != "9-15") %>% 
+  ggplot(aes(x=temp_range_high, y=n, fill = temp_range_high))+
+  geom_bar(stat="identity", fill = "#9D3D2DFF")+
+  labs(title="High Temperature vs Sightings",
+       x="High Temperature(F)",
+       y="Number of Sightings")+
+  theme_classic()
+  
+sightings_by_hightemp
+```
+  
+```{r}
+merged_data %>% 
+  count(state) %>% 
+  filter(n >= 5) %>% 
+  arrange(-n) %>% 
+  head(5) %>% 
+  ggplot(aes(x=state, y=n, fill = state))+
+  geom_bar(stat="identity")+
+  scale_fill_manual(values=my_palette)
+  
+
+```
+
+```{r}
+merged_data %>% 
+  count(state) %>% 
+  filter(n >= 5) %>% 
+  summarize(total_sightings = sum(n,na.rm = T))
+```
+
+```{r}
+#excessive drinking by state vs sightings
+merged_data %>% 
+  group_by(state) %>% 
+  summarize(avg_excessive_drinking = mean(percent_excessive_drinking, na.rm=T), n=n()) %>% 
+  arrange(-n) %>% 
+  ggplot(aes(x = avg_excessive_drinking, y = n)) +
+  geom_point( color = "black") +
+  geom_smooth(method=lm, se=F, color = "blue")+
+  labs(title="Sightings by State vs Average Excessive Drinking",
+       x="Percent Average Excessive Drinking",
+       y="Number of Sightings")+
+  theme_classic()
+```
+  
+
+

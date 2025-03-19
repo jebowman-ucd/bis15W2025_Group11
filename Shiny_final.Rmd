@@ -4,20 +4,19 @@ output: html_document
 ---
 
 ```{r}
-install.packages(DT)
-library(shiny)
-library(leaflet)
-library(sf)
+#install.packages("DT")
+library("shiny")
+library("leaflet")
+library("sf")
 library("shinythemes")
-library(dplyr)
+library("dplyr")
 library("tidyr")
-library(shinydashboard)
+library("shinydashboard")
 library("janitor")
 library("stringr")
-library('dbplyr')
-library('readr')
-library('ggplot2')
-library('data.table')
+library("readr")
+library("ggplot2")
+library("data.table")
 
 bigfootmaps <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
 
@@ -28,6 +27,7 @@ unzip(temp_shapefile)
 sf_county <- read_sf('tl_2019_06_cousub.shp')
 ```
 ```{r}
+#fix issue with submission date
 bigfootmaps <- read.csv("data/bigfoot_updated_CAonly_noNA.csv")
 
 bigfootDated_Jenn <- bigfootmaps %>%
@@ -120,7 +120,10 @@ box(title = "Plot Options",
 box(title = "What're the odds?", width = 8, #adjust the column width and add title
      plotOutput( "plot", width="350px", height="400px"), 
     ), # close the second box  
- DT::dataTableOutput("table")
+print("Historical sightings by selected county"),
+br(), 
+DT::dataTableOutput("table"),
+
 ), # close the first box    
 
 
@@ -133,9 +136,6 @@ br(),
 
           )
           )
-
-
-          
 
 
 server <- function(input, output, session) {
@@ -196,7 +196,7 @@ value$c <- bigfootDated_Jenn %>%
   count(day)%>%
   arrange(-n)%>% 
   mutate(total=sum(n))%>%
-  filter(day== input$c)%>%
+  filter(day == input$c)%>%
   mutate(perc_sightings_day = (n/total)*100)
 
 
@@ -221,7 +221,7 @@ class(param)
 class(value)
 print(trial)
 
-      v<- c(trial$value[2]/trial$value[1]/trial$value[3])
+      v<- c(trial$value[2]/trial$value[3]/trial$value[1])
 
       
  
@@ -234,13 +234,14 @@ trial %>%
 br()
 
   output$table <- DT::renderDataTable(DT::datatable({
+
    data<- bigfootDated2
    
     data <- bigfootDated2%>%
     select(county, month, day, classification, conditions)%>%
-    filter(county == input$a)%>%
-      filter(month == input$b)
-    data
+    filter(county == input$a)%>% 
+    filter(month == input$b | day == input$c)
+    
   }))     
 
 })
