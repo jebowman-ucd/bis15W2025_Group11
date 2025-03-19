@@ -86,7 +86,6 @@ box(
                   "Select Weather", 
                   choices = unique(bigfootmaps$conditions), 
                   selected = "Clear")
-  
 )
 ),
 
@@ -123,13 +122,8 @@ br(),
 DT::dataTableOutput("table"),
 
 ), # close the first box    
-
-
-
 br(),
       ) 
-
-
 ) # close the row         
 
           )
@@ -172,7 +166,6 @@ server <- function(input, output, session) {
 
   output$plot <- renderPlot({
   user_vector <- reactiveValues()
-
   
 value<-c(a,5,7)
 
@@ -198,17 +191,8 @@ value$c <- bigfootDated_Jenn %>%
   mutate(perc_sightings_day = (n/total)*100)
 
 
-
-
 param<- c(input$a,input$b,input$c)
 value<- c(value$a[4],value$b[4],value$c[4])
-
-
-
-print("PARAM")
-print(param)
-print("VALUE")
-print(value)
 
 param<-as.factor(param)
 value<-as.double(value)
@@ -221,8 +205,6 @@ print(trial)
 
       v<- c(trial$value[2]/trial$value[3]/trial$value[1])
 
-      
- 
 trial %>%
       ggplot(aes(x=param, y=value)) + 
       geom_col() +
@@ -241,12 +223,7 @@ br()
     filter(month == input$b | day == input$c)
     
   }))     
-
 })
-   
-    
- 
-    
 }
 
 shinyApp(ui, server)
